@@ -64,5 +64,8 @@ var todoService = {
 		state.todos = [ ...todos ];
 
 		return currentTodo;
+	},
+	getTodosCount: function() {
+		return state.todos.length;
 	}
 };
