@@ -5,6 +5,15 @@ var state = {
 		{ id: 3, task: 'Be happy', status: false, edit: false }
 	]
 };
+// Create sample tasks
+for (let i = 4; i <= 50; i++) {
+	state.todos.push({
+		id: 1,
+		task: 'Some random task ' + i,
+		status: false,
+		edit: false
+	});
+}
 
 var todoService = {
 	getAll: function() {
@@ -12,7 +21,9 @@ var todoService = {
 	},
 
 	addTodo: function(newTodo) {
-		newTodo.id = state.todos.length + 1; // Not a good practice to create ID
+		//newTodo.id = state.todos.length + 1; // Not a good practice to create ID
+		let maxId = Math.max.apply(Math, state.todos.map((todo) => {}));
+		newTodo.id = maxId + 1;
 		state.todos = [ ...state.todos, newTodo ];
 	},
 
