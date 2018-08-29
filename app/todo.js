@@ -1,15 +1,7 @@
-var state = {
-	todos: [
-		{ id: 1, task: 'Get the training done!', status: true },
-		{ id: 2, task: 'Ensure everyone including me understands this', status: false },
-		{ id: 3, task: 'Be happy', status: false }
-	]
-};
+let todoInput = document.getElementById('todo');
+let todoList = document.getElementById('todos');
 
-var todoInput = document.getElementById('todo');
-var todoList = document.getElementById('todos');
-
-var todoApp = {
+let todoApp = {
 	addTodo: function() {
 		let todo = todoInput.value;
 		let newTodo = {
@@ -75,7 +67,7 @@ var todoApp = {
 				buttonUndoRedoText = 'undo';
 			}
 
-			// Use Backtick-> found near <esc> key on most keyboards
+			// Use Backtick
 			btnUndoRedo = `
               <button type='button' onclick='todoApp.toggleTodos(this)' 
                    class='btn'>${buttonUndoRedoText}</button>`;
