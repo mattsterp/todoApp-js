@@ -1,18 +1,109 @@
-let todoInput = document.getElementById('todo');
-let todoList = document.getElementById('todos');
+var todoInput = document.getElementById('todo');
+var todoList = document.getElementById('todos');
 
-let todoApp = {
+var todoApp = {
 	addTodo: function() {
 		let todo = todoInput.value;
 		let newTodo = {
-			id: state.todos.length + 1, // This should come from the database
 			task: todo,
 			status: false
 		};
 
-		//state.todos.push(newTodo);
-		state.todos = [ ...state.todos, newTodo ];
-		this.render();
+		todoService.addTodo(newTodo);
+		this.appendElement(newTodo);
+	},
+	// Takes model->append to parent view
+	appendElement: function(todo) {
+		var itemView = this.parseHtml(this.getItemView(todo));
+		todoList.appendChild(itemView);
+	},
+
+	// Takes html string->DOM element
+	parseHtml: function(html) {
+		var t = document.createElement('template');
+		t.innerHTML = html;
+		return t.content.cloneNode(true); // explain
+	},
+
+	// Get html view of single model instance.
+	getItemView: function(todoItem) {
+		let html = '';
+
+		let btnText = 'complete';
+		let bntUndoRedo = '';
+		let btnDelete = `
+        <button type='button' 
+            onclick='todoApp.removeTodo(this, ${todoItem.id})' 
+        class='btn'>remove
+        </button>
+        `;
+
+		let todoItemStyle = '';
+		let buttonUndoRedoText = 'complete';
+
+		if (todoItem.status === true) {
+			todoItemStyle = 'todo-completed';
+			buttonUndoRedoText = 'undo';
+		}
+
+		// Use Backtick-> found near <esc> key on most keyboards
+		btnUndoRedo = `
+        <button type='button' onclick='todoApp.onToggleTodos(this, ${todoItem.id})' 
+            class='btn'>${buttonUndoRedoText}
+        </button>
+        `;
+
+		html = `
+        <li id=${todoItem.id} class=${todoItemStyle}>
+            ${todoItem.task} ${btnUndoRedo}${btnDelete}
+        </li>
+        `;
+
+		if (todoItem.edit) {
+			html = `
+            <li id=${todoItem.id} class=${todoItemStyle}>
+                <input onkeyup="todoApp.onUpdateTodo(event, ${todoItem.id})" 
+                    type="text" 
+                    value='${todoItem.task}' />
+                ${btnUndoRedo}
+                ${btnDelete}
+            </li>
+            `;
+		}
+		return html;
+	},
+
+	onToggleTodos: function(el, todoId) {
+		//let todoId = el.parentNode.id; // Here 'el' is button.  The parent is the <li> element.
+		let todo = todoService.toggleComplete(todoId);
+		this.updateElement(el.parentNode, todo);
+	},
+
+	onUpdateTodo: function(event, todoId) {
+		if (event.which == 27) {
+			// escape key
+			this.toggleEdit(event.target.parentNode, todoId);
+		} else if (event.which == 13) {
+			//enter key
+			todoService.updateTodo(todoId, event.target.value);
+			this.toggleEdit(event.target.parentNode, todoId);
+		}
+	},
+
+	// Render an updated fragment
+	updateElement: function(el, todo) {
+		el.outerHTML = this.getItemView(todo);
+	},
+
+	onToggleEdit: function() {
+		if (event.target.tagName.toLowerCase() !== 'li') return;
+		let todoId = event.target.id;
+		this.toggleEdit(event.target, todoId);
+	},
+
+	toggleEdit: function(target, todoId) {
+		let todo = todoService.toggleEdit(todoId);
+		this.updateElement(target, todo);
 	},
 
 	toggleTodos: function(el) {
@@ -29,54 +120,25 @@ let todoApp = {
 		this.render();
 	},
 
-	removeTodo: function(el) {
-		let todoId = el.parentNode.id;
-		let todos = state.todos.filter((todo) => {
-			return todo.id != todoId;
-		});
+	removeTodo: function(el, todoId) {
+		todoService.removeTodo(todoId);
+		todoApp.removeElement(el.parentNode);
+	},
 
-		state.todos = [ ...todos ];
-
-		this.render();
+	removeElement: function(el) {
+		todoList.removeChild(el);
 	},
 
 	render: function() {
 		let html = '';
+		let todos = todoService.getAll();
 
-		if (state.todos.length === 0) {
-			todoList.innerHTML = 'No Todo items created';
+		if (todos.length === 0) {
+			todoList.innerHTML = 'No todos yet! Be awesome and create some todos!!';
 			return;
 		}
-
-		let btnText = 'complete';
-		let bntUndoRedo = '';
-		let btnDelete = `
-          <button type='button' 
-              onclick='todoApp.removeTodo(this)' 
-              class='btn'>remove
-          </button>
-      `;
-
-		for (let i = 0; i < state.todos.length; i++) {
-			let todo = state.todos[i];
-			let todoItemStyle = '';
-			let buttonUndoRedoText = 'complete';
-
-			if (todo.status === true) {
-				todoItemStyle = 'todo-completed';
-				buttonUndoRedoText = 'undo';
-			}
-
-			// Use Backtick
-			btnUndoRedo = `
-              <button type='button' onclick='todoApp.toggleTodos(this)' 
-                   class='btn'>${buttonUndoRedoText}</button>`;
-
-			html += `
-              <li id=${todo.id} class=${todoItemStyle}>
-                  ${state.todos[i].task}${btnUndoRedo}${btnDelete}
-               </li>
-           `;
+		for (let i = 0; i < todos.length; i++) {
+			html += this.getItemView(todos[i]);
 		}
 		todoList.innerHTML = html;
 	}
